@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Moonbase Path</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@600;800&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#050816;--panel:#0e1430;--line:#253064;--text:#e8ecff;--muted:#9aa4d6;--p1:#38bdf8;--p2:#f59e0b;--p3:#4ade80;--bad:#f87171}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:radial-gradient(ellipse at 20% 0%,#1d1858,transparent 55%),var(--bg);color:var(--text);font-family:Inter,Arial,sans-serif;min-height:100vh}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;max-width:1150px;margin:0 auto;padding:18px 16px 6px;flex-wrap:wrap}
+.logo{font-family:'Exo 2';font-weight:800;font-size:clamp(24px,4vw,36px);letter-spacing:1px}
+.logo span{color:#7dd3fc}
+.hud{display:flex;gap:10px;flex-wrap:wrap}
+.pill{background:var(--panel);border:1px solid var(--line);border-radius:30px;padding:8px 14px;font-weight:600;font-size:14px;display:flex;gap:8px;align-items:center}
+.fuel{width:90px;height:9px;border-radius:5px;background:#1b2350;overflow:hidden}
+.fuel i{display:block;height:100%;background:linear-gradient(90deg,#f87171,#facc15,#4ade80);transition:width .4s}
+.main{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:18px;max-width:1150px;margin:8px auto 30px;padding:0 16px;align-items:start}
+@media(max-width:880px){.main{grid-template-columns:1fr}}
+.scene{border-radius:18px;overflow:hidden;border:1px solid var(--line);background:#02040c}
+.scene svg{display:block;width:100%;height:auto}
+.scene .cap{padding:10px 14px;font-size:14px;color:var(--muted);background:var(--panel);display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:24px}
+.phase-tag{display:inline-block;font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:5px 12px;border-radius:20px;border:1px solid}
+h2{font-family:'Exo 2';font-size:clamp(24px,3vw,32px);margin:12px 0 8px;line-height:1.15}
+.card p{color:#cdd4fa;line-height:1.55;font-size:16px}
+.feat{margin:14px 0 4px;display:grid;gap:8px}
+.feat div{display:flex;gap:10px;align-items:flex-start;background:#141b3d;border-radius:12px;padding:10px 12px;font-size:15px;line-height:1.4}
+.feat b{font-family:'Exo 2';font-size:18px}
+.q{font-size:19px;font-weight:600;line-height:1.45;margin:10px 0 16px;color:#fff}
+.opts{display:grid;gap:10px}
+.opt{text-align:left;font:500 16px Inter,Arial;color:var(--text);background:#141b3d;border:1.5px solid #2a3570;border-radius:12px;padding:14px 16px;cursor:pointer;transition:.15s}
+.opt:hover:not(:disabled){border-color:#7dd3fc;transform:translateX(3px)}
+.opt:disabled{cursor:default}
+.opt.right{border-color:#4ade80;background:#0f3326}
+.opt.wrong{border-color:var(--bad);background:#3a1418}
+.fb{margin-top:14px;border-radius:12px;padding:12px 14px;font-size:15px;line-height:1.5;display:none}
+.fb.show{display:block}
+.fb.ok{background:#0f3326;border:1px solid #2f8f5f}.fb.no{background:#3a1418;border:1px solid #8f2f3a}
+.btn{margin-top:16px;font:700 17px Inter,Arial;border:none;border-radius:12px;padding:13px 22px;background:#22d3ee;color:#03202a;cursor:pointer}
+.btn.alt{background:transparent;border:1px solid var(--line);color:var(--muted)}
+.prog{display:flex;gap:6px;margin-top:4px}
+.prog i{flex:1;height:6px;border-radius:3px;background:#1f2852}
+.prog i.done{background:#4ade80}.prog i.miss{background:#f87171}.prog i.now{background:#7dd3fc}
+.big{font-family:'Exo 2';font-size:56px;font-weight:800;color:#facc15}
+.fade{animation:f .35s ease}@keyframes f{from{opacity:0;transform:translateY(6px)}to{opacity:1}}
+.part{opacity:0;transition:opacity .6s,transform .6s;transform:translateY(8px)}
+.part.on{opacity:1;transform:none}
+</style>
+</head>
+<body>
+<div class="top">
+  <div class="logo">MOONBASE <span>PATH</span></div>
+  <div class="hud">
+    <div class="pill" id="hPhase">Phase -</div>
+    <div class="pill">Mission fuel <div class="fuel"><i id="fuel" style="width:100%"></i></div></div>
+    <div class="pill">Base parts <b id="hParts">0/15</b></div>
+  </div>
+</div>
+<div class="main">
+  <div class="scene">
+    <svg id="scene" viewBox="0 0 640 420"></svg>
+    <div class="cap"><span id="capL">Lunar South Pole · Shackleton Crater rim</span><span id="capR">Earth is 384,400 km away</span></div>
+  </div>
+  <div class="card fade" id="card"></div>
+</div>
+<script>
+const DATA = [{"phase": "Phase I - Robots and cargo first", "goal": "Learn about the South Pole and test the technology before any human lands.", "features": ["Only robots and cargo land on the Moon", "Mapping the terrain and searching for frozen water", "Testing the rocket, the Orion capsule and the landers"], "questions": [{"q": "NASA wants to know if there is frozen water near the South Pole before sending people. What should land first?", "options": ["A crew of four astronauts with shovels", "A small robotic lander with a rover and instruments", "A big habitat module for people to live in"], "correct": 1, "why": "In Phase I only robots and cargo go to the surface. A robot can search for ice without risking human lives."}, {"q": "A robot finds ice only inside a crater that never gets sunlight. Why is the ice there and not on the sunny ground nearby?", "options": ["The crater is in permanent shadow, so it is cold enough for ice to last", "The ice fell there from the Earth", "Sunlight makes ice, so the ice moved away from the light"], "correct": 0, "why": "At the South Pole the Sun is very low, so some crater floors never get light. They are colder than minus 200 degrees Celsius and ice can survive there."}, {"q": "Artemis I flew the Orion capsule around the Moon with no crew. What was the main reason?", "options": ["There were no astronauts ready", "To test the rocket and the capsule safely before risking people", "To bring rocks back from the Moon"], "correct": 1, "why": "Phase I tests the technology first, so the next missions with people on board are as safe as possible."}, {"q": "Why does NASA use small commercial landers (the CLPS program) in this phase?", "options": ["They are cheaper and can fly many times to send instruments and robots", "They can carry 20 astronauts", "They are faster than light"], "correct": 0, "why": "Companies build small landers that deliver robots and science instruments many times, which helps NASA learn a lot before Phase II."}, {"q": "A robot sends back a map showing a steep crater wall of 40 degrees near the planned landing site. What is the best decision?", "options": ["Ignore it, astronauts can climb anything", "Choose a flatter landing spot and plan routes around the steep wall", "Cancel the whole Artemis program"], "correct": 1, "why": "The data from robots is used to choose safe landing sites and routes for the people who will come in the next phase."}]}, {"phase": "Phase II - Humans land for short stays", "goal": "Land astronauts near the South Pole for missions of about a week and start setting up the base.", "features": ["First human landings since Apollo", "Short stays with all supplies brought from Earth", "Moonwalks, rover trips and collecting samples"], "questions": [{"q": "The crew will stay on the Moon for about one week. Where does their food, water and air come from in this phase?", "options": ["They grow food in a greenhouse on the Moon", "Everything is brought from Earth with them", "They make all of it from lunar ice"], "correct": 1, "why": "In Phase II the stays are short and the base is not ready yet, so all supplies come from Earth."}, {"q": "During a moonwalk an astronaut's suit shows a small leak. The lander is 2 km away. What is the most important thing?", "options": ["Finish collecting samples first", "Get back to a pressurized place fast and get medical help", "Take off the helmet to fix the leak"], "correct": 1, "why": "A leak means pressure loss, which is life threatening. The crew must reach a pressurized place quickly. This shows why a mobile medical vehicle is needed."}, {"q": "Why do the astronauts land near the South Pole and not in the same places as Apollo?", "options": ["Because the South Pole has frozen water and long sunlight on the crater rims", "Because it is warmer than anywhere else", "Because Apollo left trash at the old sites"], "correct": 0, "why": "The South Pole has the resources a future base needs: ice for water and fuel, and rims with almost constant sunlight for power."}, {"q": "What is the Gateway station used for in this phase?", "options": ["It is a hotel for tourists", "It is a small station orbiting the Moon where Orion meets the lander", "It is a telescope that looks at Mars"], "correct": 1, "why": "Gateway is a meeting point in lunar orbit. Orion docks there and the crew moves to the lander that takes them down."}, {"q": "On the last day of a short mission, what should the crew leave behind to help Phase III?", "options": ["Nothing, they must take everything home", "Instruments and equipment that will be used by the future base", "Their spacesuits, so the next crew does not need any"], "correct": 1, "why": "Every Phase II mission builds toward the permanent base by leaving equipment and collecting information."}]}, {"phase": "Phase III - A permanent home on the Moon", "goal": "Build a base where crews can live and work for months, and prepare for Mars.", "features": ["Long stays of a month or more", "Using local resources like water ice (ISRU)", "Full life support, including medical care on the Moon"], "questions": [{"q": "The base needs a lot of water and oxygen for months. What is the smartest way to get them?", "options": ["Send a new rocket full of water every day", "Mine the ice in shadowed craters and turn it into water and oxygen", "Collect rain on the Moon"], "correct": 1, "why": "Using local resources (ISRU) is a key feature of Phase III. Water ice can become drinking water, oxygen and rocket fuel."}, {"q": "An astronaut breaks a leg inside a dark crater, 10 km from the base. Earth is about 3 days away. What does the base need most?", "options": ["A faster rocket back to Earth", "A mobile medical vehicle that can reach the crater and treat the astronaut on the spot", "A video call with family"], "correct": 1, "why": "In Phase III people live far from any hospital. A vehicle like the Lunar Med Pod brings the treatment to the patient."}, {"q": "Why are crews in Phase III in more danger from radiation than crews in Phase II?", "options": ["They stay much longer, so they collect a bigger dose", "The Sun is stronger in Phase III", "There is no radiation in Phase II"], "correct": 0, "why": "Radiation damage adds up over time. Long stays mean the base needs shelters and medical monitoring."}, {"q": "Where is the best place to put the solar panels of the permanent base?", "options": ["At the bottom of a deep crater", "On a high crater rim that gets sunlight almost all the time", "Under the habitat to protect them"], "correct": 1, "why": "Near the pole the Sun is low, so high rims get light almost constantly while crater floors stay dark."}, {"q": "Why is the Moon base called a \"launch point\" for Mars?", "options": ["Because the Moon is on the way to Mars", "Because crews can practice living far from Earth and make fuel from lunar ice", "Because Mars is closer to the Moon than to Earth"], "correct": 1, "why": "Living on the Moon for months tests the technology and medicine needed for Mars, and lunar ice can be turned into rocket fuel."}]}];
+const COL=['#38bdf8','#f59e0b','#4ade80'];
+const NS='http://www.w3.org/2000/svg';const sv=document.getElementById('scene');
+const mk=(n,a,p=sv)=>{const e=document.createElementNS(NS,n);for(const k in a)e.setAttribute(k,a[k]);p.appendChild(e);return e};
+function scene(){
+ sv.innerHTML='';const d=mk('defs',{});
+ const g=mk('linearGradient',{id:'sky',x1:0,y1:0,x2:0,y2:1},d);mk('stop',{offset:0,'stop-color':'#050816'},g);mk('stop',{offset:1,'stop-color':'#12183a'},g);
+ const gg=mk('linearGradient',{id:'gr',x1:0,y1:0,x2:0,y2:1},d);mk('stop',{offset:0,'stop-color':'#8b8fa8'},gg);mk('stop',{offset:1,'stop-color':'#4a4e66'},gg);
+ mk('rect',{width:640,height:420,fill:'url(#sky)'});
+ let s=3;const R=()=>{s=(s*9301+49297)%233280;return s/233280};
+ for(let i=0;i<90;i++)mk('circle',{cx:R()*640,cy:R()*230,r:R()*1.3+.3,fill:'#fff',opacity:R()*.7+.2});
+ // earth + sun low on horizon
+ mk('circle',{cx:540,cy:70,r:30,fill:'#2563eb'});mk('path',{d:'M520 60 q15 -12 30 -2 q-6 14 -22 12z M540 85 q14 -4 22 6 q-12 8 -22 -6z',fill:'#22c55e'});
+ mk('circle',{cx:60,cy:262,r:26,fill:'#fde68a',opacity:.95});mk('circle',{cx:60,cy:262,r:42,fill:'#fde68a',opacity:.15});
+ // ground and crater
+ mk('path',{d:'M0 270 L120 252 L230 266 L330 244 L450 262 L640 248 L640 420 L0 420Z',fill:'url(#gr)'});
+ mk('ellipse',{cx:470,cy:350,rx:170,ry:42,fill:'#0b0e1f'});mk('ellipse',{cx:470,cy:342,rx:170,ry:36,fill:'none',stroke:'#c7cbe0','stroke-width':3,opacity:.5});
+ const t=mk('text',{x:470,y:356,'text-anchor':'middle',fill:'#7dd3fc','font-size':12,'font-family':'Inter',opacity:.8});t.textContent='permanent shadow · water ice';
+ for(let i=0;i<14;i++)mk('ellipse',{cx:R()*640,cy:290+R()*120,rx:R()*16+4,ry:R()*4+2,fill:'#3c4058',opacity:.6});
+ PARTS.forEach((fn,i)=>{const grp=mk('g',{class:'part'+(i<built?' on':''),id:'pt'+i});fn(grp)});
+}
+const PARTS=[
+ g=>{mk('rect',{x:70,y:268,width:40,height:22,rx:3,fill:'#e5e7eb'},g);mk('path',{d:'M72 290 l-10 16 M108 290 l10 16',stroke:'#cbd5e1','stroke-width':3},g);mk('rect',{x:80,y:256,width:20,height:12,fill:'#f59e0b'},g)}, // robotic lander
+ g=>{mk('rect',{x:140,y:300,width:34,height:14,rx:3,fill:'#facc15'},g);[146,168].forEach(x=>mk('circle',{cx:x,cy:316,r:5,fill:'#1f2937'},g));mk('line',{x1:168,y1:300,x2:172,y2:288,stroke:'#e5e7eb','stroke-width':2},g)}, // rover
+ g=>{mk('line',{x1:300,y1:330,x2:330,y2:345,stroke:'#7dd3fc','stroke-width':2,'stroke-dasharray':'4 4'},g);mk('circle',{cx:300,cy:330,r:6,fill:'#7dd3fc'},g)}, // ice scan
+ g=>{mk('rect',{x:200,y:290,width:16,height:20,rx:3,fill:'#cbd5e1'},g);mk('circle',{cx:208,cy:285,r:7,fill:'#e2e8f0'},g)}, // robot
+ g=>{mk('line',{x1:120,y1:256,x2:120,y2:226,stroke:'#e5e7eb','stroke-width':3},g);mk('path',{d:'M108 226 q12 -14 24 0z',fill:'#e5e7eb'},g)}, // antenna
+ g=>{mk('rect',{x:250,y:216,width:30,height:60,rx:8,fill:'#f1f5f9'},g);mk('rect',{x:254,y:230,width:22,height:8,fill:'#1e293b'},g);mk('path',{d:'M250 276 l-12 18 M280 276 l12 18',stroke:'#cbd5e1','stroke-width':3},g)}, // crew lander
+ g=>{mk('line',{x1:300,y1:290,x2:300,y2:256,stroke:'#e5e7eb','stroke-width':2},g);mk('rect',{x:300,y:256,width:22,height:14,fill:'#ef4444'},g);mk('rect',{x:300,y:256,width:9,height:7,fill:'#1d4ed8'},g)}, // flag
+ g=>{[320,340].forEach(x=>{mk('circle',{cx:x,cy:278,r:6,fill:'#f8fafc'},g);mk('rect',{x:x-5,y:284,width:10,height:14,rx:3,fill:'#f8fafc'},g)})}, // astronauts
+ g=>{mk('rect',{x:360,y:290,width:44,height:12,rx:3,fill:'#94a3b8'},g);[366,398].forEach(x=>mk('circle',{cx:x,cy:304,r:6,fill:'#1f2937'},g));mk('rect',{x:374,y:282,width:10,height:8,fill:'#e2e8f0'},g)}, // LTV
+ g=>{mk('rect',{x:300,y:60,width:46,height:12,rx:4,fill:'#cbd5e1'},g);mk('rect',{x:280,y:56,width:16,height:20,fill:'#1d4ed8'},g);mk('rect',{x:350,y:56,width:16,height:20,fill:'#1d4ed8'},g);const t=mk('text',{x:323,y:92,'text-anchor':'middle',fill:'#9aa4d6','font-size':11,'font-family':'Inter'},g);t.textContent='Gateway'}, // gateway
+ g=>{mk('path',{d:'M420 268 a34 30 0 0 1 68 0z',fill:'#e2e8f0'},g);mk('rect',{x:440,y:254,width:10,height:14,fill:'#334155'},g)}, // habitat 1
+ g=>{mk('path',{d:'M494 262 a26 24 0 0 1 52 0z',fill:'#cbd5e1'},g);mk('rect',{x:486,y:262,width:68,height:6,fill:'#94a3b8'},g)}, // habitat 2
+ g=>{[560,590].forEach(x=>{mk('line',{x1:x+10,y1:250,x2:x+10,y2:226,stroke:'#cbd5e1','stroke-width':2},g);mk('rect',{x:x,y:206,width:22,height:22,fill:'#1d4ed8',stroke:'#93c5fd'},g)})}, // solar
+ g=>{mk('rect',{x:420,y:290,width:58,height:22,rx:7,fill:'#f8fafc'},g);mk('rect',{x:440,y:296,width:12,height:4,fill:'#ef4444'},g);mk('rect',{x:444,y:292,width:4,height:12,fill:'#ef4444'},g);[430,468].forEach(x=>mk('circle',{cx:x,cy:314,r:7,fill:'#1f2937'},g))}, // med pod
+ g=>{mk('rect',{x:520,y:300,width:30,height:24,rx:3,fill:'#64748b'},g);mk('rect',{x:550,y:310,width:30,height:4,fill:'#7dd3fc'},g);const t=mk('text',{x:535,y:338,'text-anchor':'middle',fill:'#7dd3fc','font-size':10,'font-family':'Inter'},g);t.textContent='ice → water, O₂'} // ISRU
+];
+let ph=0,qi=0,fuel=100,built=0,results=[],score=0;
+const card=document.getElementById('card');
+function hud(){document.getElementById('hPhase').innerHTML=`<span style="color:${COL[ph]}">●</span> Phase ${['I','II','III'][ph]}`;
+ document.getElementById('fuel').style.width=fuel+'%';document.getElementById('hParts').textContent=built+'/15'}
+function show(h){card.classList.remove('fade');void card.offsetWidth;card.classList.add('fade');card.innerHTML=h}
+function start(){show(`<span class="phase-tag" style="color:#7dd3fc;border-color:#7dd3fc">Mission briefing</span>
+ <h2>You are the mission planner of the first Moon base</h2>
+ <p>NASA's Artemis program will build a base near the lunar South Pole in three phases. In each phase you will read a short briefing and then face real mission situations. Make the right decisions to add new parts to the base.</p>
+ <div class="feat"><div>⛽ <span>A wrong decision costs mission fuel. If the fuel runs out, you restart that phase.</span></div>
+ <div>🏗️ <span>Every right decision builds a new part of the base on the left.</span></div>
+ <div>🧠 <span>Think about each situation. The answers are not just facts to remember.</span></div></div>
+ <button class="btn" onclick="brief()">Start Phase I</button>`)}
+function brief(){qi=0;fuel=100;results=[];hud();const L=DATA[ph];
+ show(`<span class="phase-tag" style="color:${COL[ph]};border-color:${COL[ph]}">Phase ${['I','II','III'][ph]} briefing</span>
+ <h2>${L.phase.split(' - ')[1]}</h2><p><b>Goal:</b> ${L.goal}</p>
+ <div class="feat">${L.features.map((f,i)=>`<div><b style="color:${COL[ph]}">${i+1}</b><span>${f}</span></div>`).join('')}</div>
+ <button class="btn" onclick="ask()">Begin the missions</button>`)}
+function prog(){return `<div class="prog">${DATA[ph].questions.map((_,i)=>`<i class="${i<results.length?(results[i]?'done':'miss'):(i===qi?'now':'')}"></i>`).join('')}</div>`}
+function ask(){const Q=DATA[ph].questions[qi];
+ show(`${prog()}<span class="phase-tag" style="margin-top:14px;color:${COL[ph]};border-color:${COL[ph]}">Phase ${['I','II','III'][ph]} · Situation ${qi+1} of 5</span>
+ <div class="q">${Q.q}</div><div class="opts">${Q.options.map((o,i)=>`<button class="opt" onclick="pick(${i})">${String.fromCharCode(65+i)}. ${o}</button>`).join('')}</div>
+ <div class="fb" id="fb"></div><div id="nx"></div>`)}
+function pick(i){const Q=DATA[ph].questions[qi],ok=i===Q.correct;const b=[...document.querySelectorAll('.opt')];b.forEach(x=>x.disabled=true);
+ b[Q.correct].classList.add('right');if(!ok)b[i].classList.add('wrong');results.push(ok);
+ const fb=document.getElementById('fb');fb.className='fb show '+(ok?'ok':'no');
+ fb.innerHTML=(ok?'<b>Correct! A new base part was added.</b> ':'<b>Not this time. You lost 34% fuel.</b> ')+Q.why;
+ if(ok){score++;const el=document.getElementById('pt'+built);if(el)el.classList.add('on');built++}else{fuel=Math.max(0,fuel-34)}
+ hud();const last=qi===4;let btn;
+ if(fuel<=0)btn=`<button class="btn" onclick="fail()">Continue</button>`;else btn=`<button class="btn" onclick="${last?'done()':'next()'}">${last?'Finish phase':'Next situation'}</button>`;
+ document.getElementById('nx').innerHTML=btn}
+function next(){qi++;ask()}
+function fail(){const lost=results.filter(Boolean).length;built-=lost;score-=lost;scene();hud();
+ show(`<span class="phase-tag" style="color:var(--bad);border-color:var(--bad)">Out of fuel</span><h2>Mission aborted</h2>
+ <p>Too many wrong decisions in this phase. On the real Moon this could put the crew in danger. Read the briefing again and retry Phase ${['I','II','III'][ph]}.</p>
+ <button class="btn" onclick="brief()">Retry the phase</button>`)}
+function done(){const good=results.filter(Boolean).length;
+ if(ph<2){show(`<span class="phase-tag" style="color:${COL[ph]};border-color:${COL[ph]}">Phase ${['I','II','III'][ph]} complete</span>
+  <h2>${good} of 5 right decisions</h2><p>${['The robots did their job: the South Pole is mapped, ice was found and the technology is tested. Now it is safe to send people.','Astronauts walked on the Moon again and left equipment for the future base. Now it is time to stay for good.'][ph]}</p>
+  <button class="btn" onclick="ph++;brief()">Start Phase ${['II','III'][ph]}</button>`)}
+ else{show(`<span class="phase-tag" style="color:#facc15;border-color:#facc15">Artemis complete</span>
+  <h2>The Moon base is open!</h2><div class="big">${score}/15</div>
+  <p>${score>=13?'Outstanding planning. The base is ready for long stays and is a real launch point for Mars.':score>=9?'Good job. The base works, but a few decisions could have been safer.':'The base was built, but with many risky decisions. Try again to make it safer for the crew.'}</p>
+  <p style="margin-top:10px">Remember: Phase I sends robots and cargo, Phase II lands people for short stays, and Phase III makes the Moon a permanent home, where medical care like the Lunar Med Pod is a must.</p>
+  <button class="btn" onclick="ph=0;built=0;score=0;scene();start()">Play again</button>`)}}
+scene();hud();start();
+</script>
+</body>
+</html>
