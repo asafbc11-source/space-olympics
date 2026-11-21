@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Moonbase Path</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E%F0%9F%8C%95%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@600;800&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
@@ -148,7 +149,7 @@ function done(){const good=results.filter(Boolean).length;
   <h2>The Moon base is open!</h2><div class="big">${score}/15</div>
   <p>${score>=13?'Outstanding planning. The base is ready for long stays and is a real launch point for Mars.':score>=9?'Good job. The base works, but a few decisions could have been safer.':'The base was built, but with many risky decisions. Try again to make it safer for the crew.'}</p>
   <p style="margin-top:10px">Remember: Phase I sends robots and cargo, Phase II lands people for short stays, and Phase III makes the Moon a permanent home, where medical care like the Lunar Med Pod is a must.</p>
-  <button class="btn" onclick="ph=0;built=0;score=0;scene();start()">Play again</button>`)}}
+  <button class="btn" onclick="ph=0;built=0;score=0;fuel=100;scene();hud();start()">Play again</button>`)}}
 scene();hud();start();
 </script>
 </body>
