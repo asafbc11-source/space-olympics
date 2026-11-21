@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Shackleton Rescue</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E%F0%9F%9A%91%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@600;800&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
@@ -97,13 +98,13 @@ const SN=[
  {k:'cold',f:98,t:79,txt:'The floor of Shackleton Crater is in permanent shadow and can drop below minus 150°C. A standard vehicle\'s battery fluid freezes and it loses all power.'},
  {k:'dust',f:47,t:15,txt:'Lunar dust is sharp like broken glass and electrically charged, so it sticks to everything. It gets into the axles and vents of a standard vehicle and jams the motors.'},
  {k:'slope',f:71,t:50,txt:'The crater walls are very steep. In 1/6 gravity the wheels have less grip, they slip on the loose dust and the vehicle starts to tip over.'},
- {k:'vac',f:89,t:68,txt:'There is no air on the Moon. If a cabin or spacesuit leaks, the pressure drops fast. The injured astronaut cannot be treated in a vehicle that cannot hold pressure.'},
- {k:'rad',f:94,t:74,txt:'The Moon has no magnetic field and no atmosphere. A solar storm sends dangerous particles that damage the crew\'s blood cells and DNA.'}
+ {k:'vac',f:89,t:68,txt:'There is no air on the Moon. A standard rover has no pressurized cabin, so if a spacesuit leaks the pressure drops in seconds and the injured astronaut cannot be treated. Without air, heat cannot escape from the electronics, and ordinary oil in the motors evaporates.'},
+ {k:'rad',f:94,t:74,txt:'The Moon has no magnetic field and no atmosphere. A solar storm sends fast particles that can crash the computer of a standard vehicle and damage the crew\'s blood cells and DNA.'}
 ];
 // ladders: Lunar Med Pod upgrades
 const LD=[
  {k:'cold',f:3,t:22,txt:'The Med Pod keeps its batteries in an insulated, heated box and moves waste heat from the motors to the batteries and the patient cabin. It keeps working even at minus 150°C.'},
- {k:'dust',f:11,t:30,txt:'Sealed motors, double seals and rubber dust boots on the axles, filters on every vent and an electrostatic shield that pushes charged dust away.'},
+ {k:'dust',f:11,t:30,txt:'Sealed motors with double seals and rubber dust boots on the axles. No open vents: heat leaves through external heat sinks, and an electrostatic shield pushes charged dust away.'},
  {k:'slope',f:28,t:55,txt:'Wide wheelbase, low center of gravity, mesh wheels with metal grips and active suspension that keeps the cabin level. A winch helps on the steepest parts.'},
  {k:'vac',f:42,t:63,txt:'An airtight cabin with normal air pressure and oxygen, plus an airlock and a Gamow bag. The patient can be treated without a spacesuit.'},
  {k:'rad',f:57,t:84,txt:'A shelter in the middle of the Pod surrounded by water tanks, one of the best shields against radiation, plus radiation sensors that warn the crew early.'}
@@ -154,7 +155,7 @@ let tokG;function tokens(){if(tokG)tokG.remove();tokG=el('g',{});
  P.forEach((p,i)=>{const q=pos(p.at);const off=i===0?-16:16;const g=el('g',{transform:`translate(${q.x+off},${q.y+20})`},tokG);
   el('circle',{r:15,fill:p.c,stroke:'#fff','stroke-width':3},g);const t=el('text',{y:5,'text-anchor':'middle','font-size':14,'font-weight':800,fill:'#fff','font-family':'Inter'},g);t.textContent=i+1;});}
 let P,cur,busy;
-function reset(){P=[{n:'Player 1',c:'#ef4444',at:1},{n:'Player 2',c:'#3b82f6',at:1}];cur=0;busy=false;showDie(1);ui();draw();
+function reset(){P=[{n:'Player 1',c:'#ef4444',at:1},{n:'Player 2',c:'#3b82f6',at:1}];cur=0;busy=false;document.getElementById('roll').disabled=false;showDie(1);ui();draw();
  log('Player 1 starts at the base (square 1). Roll to begin the rescue!')}
 function ui(){document.getElementById('who').textContent=P[cur].n;document.getElementById('who').style.color=P[cur].c;
  document.getElementById('players').innerHTML=P.map(p=>`<div><span class="dot" style="background:${p.c}"></span>${p.n}<b>${p.at}</b></div>`).join('')}
