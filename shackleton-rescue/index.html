@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shackleton Rescue</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@600;800&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#060a1a;--panel:#0f1530;--line:#26305c;--text:#e6eaff;--muted:#99a3d4;
+--cold:#38bdf8;--dust:#f59e0b;--slope:#f472b6;--vac:#a78bfa;--rad:#4ade80;--p1:#ef4444;--p2:#3b82f6}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:radial-gradient(ellipse at 80% 0%,#1b1550 0%,transparent 55%),var(--bg);color:var(--text);font-family:Inter,Arial,sans-serif;min-height:100vh}
+header{text-align:center;padding:22px 16px 10px}
+h1{font-family:'Exo 2',sans-serif;font-weight:800;font-size:clamp(30px,5vw,52px);letter-spacing:1px;color:#7dd3fc}
+.tagline{color:var(--muted);margin-top:4px;font-size:clamp(14px,2vw,18px)}
+.wrap{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:20px;align-items:start;max-width:1220px;margin:10px auto 40px;padding:0 16px}
+@media(max-width:900px){.wrap{grid-template-columns:1fr}}
+.boardbox{position:relative;border-radius:18px;padding:10px;background:#0b1028;border:2px solid #2dd4ff55;box-shadow:0 0 40px #2dd4ff22}
+svg#board{width:100%;height:auto;display:block;border-radius:12px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:18px}
+.side{display:flex;flex-direction:column;gap:14px}
+.turn{text-align:center}
+.turn small{color:var(--muted);font-size:14px}
+.turn .who{font-family:'Exo 2';font-weight:800;font-size:32px;margin:2px 0 10px}
+.die{width:78px;height:78px;margin:6px auto 14px;border-radius:16px;background:#fff;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);padding:10px;box-shadow:0 6px 0 #c9d1f5}
+.die i{width:14px;height:14px;border-radius:50%;background:#0f1530;place-self:center;visibility:hidden}
+.die.roll{animation:shake .5s}
+@keyframes shake{0%,100%{transform:rotate(0)}25%{transform:rotate(-18deg) scale(.92)}50%{transform:rotate(14deg)}75%{transform:rotate(-8deg)}}
+button{font:600 18px Inter,Arial;cursor:pointer;border:none;border-radius:12px;padding:13px 18px;width:100%;background:#22d3ee;color:#04202a}
+button:disabled{opacity:.45;cursor:default}
+button.ghost{background:transparent;color:var(--muted);border:1px solid var(--line);font-size:14px;padding:9px;margin-top:8px}
+.players div{display:flex;align-items:center;gap:10px;padding:6px 0;font-weight:600}
+.players span.dot{width:14px;height:14px;border-radius:50%}
+.players b{margin-left:auto;font-family:'Exo 2'}
+.legend h3,.how h3{font-family:'Exo 2';font-size:16px;letter-spacing:1.5px;color:var(--muted);margin-bottom:8px;text-transform:uppercase}
+#legend>div{display:flex;align-items:center;gap:8px;font-size:14px;padding:5px 0;border-bottom:1px solid #1b2348;flex-wrap:wrap}
+#legend>div:last-child{border:none}
+.legend .sw{width:12px;height:12px;border-radius:3px;flex:none}
+.legend .arrow{color:var(--muted)}
+.how p{font-size:14px;color:#c6cdf3;line-height:1.5}
+.log{font-size:14px;color:#c6cdf3;min-height:44px;line-height:1.45}
+.card{position:fixed;inset:0;background:#000a;display:none;align-items:center;justify-content:center;padding:16px;z-index:5}
+.card.show{display:flex}
+.card .box{max-width:470px;width:100%;background:var(--panel);border-radius:20px;padding:24px;border:2px solid;text-align:center}
+.card .ic{font-size:50px}
+.card h2{font-family:'Exo 2';font-size:26px;margin:6px 0}
+.card .kind{font-size:13px;letter-spacing:2px;text-transform:uppercase;font-weight:700}
+.card p{color:#d3d9fb;font-size:16px;line-height:1.5;margin:10px 0 18px;text-align:left}
+.card .move{font-weight:700;margin-bottom:14px}
+.win .box{border-color:#facc15}
+</style>
+</head>
+<body>
+<header>
+  <h1>SHACKLETON RESCUE</h1>
+  <p class="tagline">Drive the Lunar Med Pod down into Shackleton Crater. Avoid the hazards, climb with the upgrades, reach the injured astronaut at square 100.</p>
+</header>
+<div class="wrap">
+  <div class="boardbox"><svg id="board" viewBox="0 0 1000 1000"></svg></div>
+  <div class="side">
+    <div class="panel turn">
+      <small>Turn</small>
+      <div class="who" id="who">Player 1</div>
+      <div class="die" id="die"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+      <button id="roll">Roll the dice</button>
+      <button class="ghost" id="restart">Restart game</button>
+    </div>
+    <div class="panel players" id="players"></div>
+    <div class="panel log" id="log">Player 1 starts at the base (square 1). Roll to begin the rescue!</div>
+    <div class="panel legend">
+      <h3>Hazards (snakes) → Med Pod upgrades (ladders)</h3>
+      <div id="legend"></div>
+    </div>
+    <div class="panel how">
+      <h3>How to play</h3>
+      <p>Take turns rolling the dice. Land on a <b>hazard</b> and you slide down the snake, because a standard vehicle would fail there. Land on a <b>Med Pod upgrade</b> and you climb the ladder. Each hazard has an upgrade in the same color that solves it. You must roll the exact number to reach 100.</p>
+    </div>
+  </div>
+</div>
+
+<div class="card" id="card"><div class="box" id="cardbox">
+  <div class="ic" id="cic"></div><div class="kind" id="ckind"></div><h2 id="ctitle"></h2>
+  <p id="ctext"></p><div class="move" id="cmove"></div><button id="cok">Continue</button>
+</div></div>
+
+<script>
+const H={
+ cold:{name:'Extreme Cold',col:'var(--cold)',hex:'#38bdf8',ic:'🥶',up:'Thermal Heaters',upic:'🔥'},
+ dust:{name:'Regolith Dust',col:'var(--dust)',hex:'#f59e0b',ic:'🌫️',up:'Dust Seals & Filters',upic:'🛡️'},
+ slope:{name:'Steep Slope',col:'var(--slope)',hex:'#f472b6',ic:'⛰️',up:'Traction & Stability System',upic:'⚙️'},
+ vac:{name:'Vacuum',col:'var(--vac)',hex:'#a78bfa',ic:'💨',up:'Pressurized Cabin',upic:'🚪'},
+ rad:{name:'Radiation',col:'var(--rad)',hex:'#4ade80',ic:'☢️',up:'Radiation Shelter',upic:'💧'}
+};
+// snakes: hazard squares (from -> to)
+const SN=[
+ {k:'cold',f:98,t:79,txt:'The floor of Shackleton Crater is in permanent shadow and can drop below minus 150°C. A standard vehicle\'s battery fluid freezes and it loses all power.'},
+ {k:'dust',f:47,t:15,txt:'Lunar dust is sharp like broken glass and electrically charged, so it sticks to everything. It gets into the axles and vents of a standard vehicle and jams the motors.'},
+ {k:'slope',f:71,t:50,txt:'The crater walls are very steep. In 1/6 gravity the wheels have less grip, they slip on the loose dust and the vehicle starts to tip over.'},
+ {k:'vac',f:89,t:68,txt:'There is no air on the Moon. If a cabin or spacesuit leaks, the pressure drops fast. The injured astronaut cannot be treated in a vehicle that cannot hold pressure.'},
+ {k:'rad',f:94,t:74,txt:'The Moon has no magnetic field and no atmosphere. A solar storm sends dangerous particles that damage the crew\'s blood cells and DNA.'}
+];
+// ladders: Lunar Med Pod upgrades
+const LD=[
+ {k:'cold',f:3,t:22,txt:'The Med Pod keeps its batteries in an insulated, heated box and moves waste heat from the motors to the batteries and the patient cabin. It keeps working even at minus 150°C.'},
+ {k:'dust',f:11,t:30,txt:'Sealed motors, double seals and rubber dust boots on the axles, filters on every vent and an electrostatic shield that pushes charged dust away.'},
+ {k:'slope',f:28,t:55,txt:'Wide wheelbase, low center of gravity, mesh wheels with metal grips and active suspension that keeps the cabin level. A winch helps on the steepest parts.'},
+ {k:'vac',f:42,t:63,txt:'An airtight cabin with normal air pressure and oxygen, plus an airlock and a Gamow bag. The patient can be treated without a spacesuit.'},
+ {k:'rad',f:57,t:84,txt:'A shelter in the middle of the Pod surrounded by water tanks, one of the best shields against radiation, plus radiation sensors that warn the crew early.'}
+];
+const svg=document.getElementById('board');const NS='http://www.w3.org/2000/svg';
+const el=(n,a,p=svg)=>{const e=document.createElementNS(NS,n);for(const k in a)e.setAttribute(k,a[k]);p.appendChild(e);return e};
+function pos(n){const r=Math.floor((n-1)/10),c=(n-1)%10,col=r%2===0?c:9-c;return{x:col*100+50,y:(9-r)*100+50}}
+function draw(){
+ svg.innerHTML='';
+ const d=el('defs',{});
+ const g=el('radialGradient',{id:'crater',cx:'50%',cy:'52%',r:'60%'},d);
+ el('stop',{offset:'0%','stop-color':'#05081a'},g);el('stop',{offset:'55%','stop-color':'#151b3a'},g);el('stop',{offset:'100%','stop-color':'#3a4166'},g);
+ el('rect',{x:0,y:0,width:1000,height:1000,fill:'url(#crater)'});
+ // crater rings + rocks
+ el('ellipse',{cx:500,cy:520,rx:430,ry:410,fill:'none',stroke:'#58608a',"stroke-width":10,opacity:.35});
+ el('ellipse',{cx:500,cy:520,rx:300,ry:285,fill:'none',stroke:'#58608a',"stroke-width":5,opacity:.25});
+ let s=11;const R=()=>{s=(s*9301+49297)%233280;return s/233280};
+ for(let i=0;i<60;i++)el('circle',{cx:R()*1000,cy:R()*1000,r:R()*14+3,fill:'#8a93bf',opacity:R()*.12+.04});
+ const special={};SN.forEach(x=>special[x.f]={...x,type:'snake'});LD.forEach(x=>special[x.f]={...x,type:'ladder'});
+ for(let n=1;n<=100;n++){const p=pos(n);const sp=special[n];
+  el('rect',{x:p.x-50,y:p.y-50,width:100,height:100,fill:sp?H[sp.k].hex:'transparent','fill-opacity':sp?(sp.type==='snake'?.33:.22):0,stroke:'#ffffff22'});
+  const t=el('text',{x:p.x-42,y:p.y-30,fill:'#fff','font-size':20,'font-family':'Exo 2','font-weight':800,opacity:.85});t.textContent=n;
+ }
+ const b=el('text',{x:pos(1).x,y:pos(1).y+18,'text-anchor':'middle','font-size':30});b.textContent='🏠';
+ const f=el('text',{x:pos(100).x,y:pos(100).y+18,'text-anchor':'middle','font-size':34});f.textContent='🧑‍🚀';
+ LD.forEach(l=>ladder(l));SN.forEach(x=>snake(x));
+ // labels on top of snakes and ladders
+ for(const n in special){const sp=special[n],p=pos(+n);
+  const ic=el('text',{x:p.x+34,y:p.y-24,'text-anchor':'middle','font-size':24});ic.textContent=sp.type==='snake'?H[sp.k].ic:H[sp.k].upic;
+  const words=(sp.type==='snake'?H[sp.k].name:H[sp.k].up).replace(' & ',' & ').replace('Traction & Stability System','Traction System').split(' ');
+  const half=Math.ceil(words.length/2),lines=words.length>1?[words.slice(0,half).join(' '),words.slice(half).join(' ')]:[words[0]];
+  el('rect',{x:p.x-48,y:p.y+44-lines.length*14,width:96,height:lines.length*14+4,rx:4,fill:'#05081ad9'});
+  lines.forEach((ln,i)=>{const t=el('text',{x:p.x,y:p.y+44-(lines.length-1-i)*14-3,'text-anchor':'middle','font-size':11.5,'font-family':'Inter','font-weight':700,fill:H[sp.k].hex});t.textContent=ln.toUpperCase()});}
+ tokens();
+}
+function ladder(l){const a=pos(l.f),b=pos(l.t),dx=b.x-a.x,dy=b.y-a.y,len=Math.hypot(dx,dy),nx=-dy/len*14,ny=dx/len*14,c=H[l.k].hex;
+ const gr=el('g',{opacity:.95});
+ [[1],[-1]].forEach(([s])=>el('line',{x1:a.x+nx*s,y1:a.y+ny*s,x2:b.x+nx*s,y2:b.y+ny*s,stroke:c,'stroke-width':7,'stroke-linecap':'round'},gr));
+ const steps=Math.floor(len/38);for(let i=1;i<steps;i++){const t=i/steps;el('line',{x1:a.x+dx*t+nx,y1:a.y+dy*t+ny,x2:a.x+dx*t-nx,y2:a.y+dy*t-ny,stroke:c,'stroke-width':5},gr)}}
+function snake(x){const a=pos(x.f),b=pos(x.t),dx=b.x-a.x,dy=b.y-a.y,len=Math.hypot(dx,dy),nx=-dy/len,ny=dx/len,c=H[x.k].hex;
+ let d=`M${a.x},${a.y}`;const segs=4;for(let i=1;i<=segs;i++){const t0=(i-.5)/segs,t1=i/segs,w=(i%2?1:-1)*38;d+=` Q${a.x+dx*t0+nx*w},${a.y+dy*t0+ny*w} ${a.x+dx*t1},${a.y+dy*t1}`}
+ el('path',{d,fill:'none',stroke:'#0008','stroke-width':17,'stroke-linecap':'round'});
+ el('path',{d,fill:'none',stroke:c,'stroke-width':12,'stroke-linecap':'round'});
+ el('path',{d,fill:'none',stroke:'#fff','stroke-width':2.5,'stroke-dasharray':'3 12',opacity:.6});
+ el('circle',{cx:a.x,cy:a.y,r:15,fill:c,stroke:'#0008','stroke-width':3});
+ el('circle',{cx:a.x-5,cy:a.y-4,r:3,fill:'#000'});el('circle',{cx:a.x+5,cy:a.y-4,r:3,fill:'#000'});}
+let tokG;function tokens(){if(tokG)tokG.remove();tokG=el('g',{});
+ P.forEach((p,i)=>{const q=pos(p.at);const off=i===0?-16:16;const g=el('g',{transform:`translate(${q.x+off},${q.y+20})`},tokG);
+  el('circle',{r:15,fill:p.c,stroke:'#fff','stroke-width':3},g);const t=el('text',{y:5,'text-anchor':'middle','font-size':14,'font-weight':800,fill:'#fff','font-family':'Inter'},g);t.textContent=i+1;});}
+let P,cur,busy;
+function reset(){P=[{n:'Player 1',c:'#ef4444',at:1},{n:'Player 2',c:'#3b82f6',at:1}];cur=0;busy=false;showDie(1);ui();draw();
+ log('Player 1 starts at the base (square 1). Roll to begin the rescue!')}
+function ui(){document.getElementById('who').textContent=P[cur].n;document.getElementById('who').style.color=P[cur].c;
+ document.getElementById('players').innerHTML=P.map(p=>`<div><span class="dot" style="background:${p.c}"></span>${p.n}<b>${p.at}</b></div>`).join('')}
+function log(t){document.getElementById('log').innerHTML=t}
+const faces={1:[4],2:[0,8],3:[0,4,8],4:[0,2,6,8],5:[0,2,4,6,8],6:[0,2,3,5,6,8]};
+function showDie(v){document.querySelectorAll('#die i').forEach((d,i)=>d.style.visibility=faces[v].includes(i)?'visible':'hidden')}
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+async function roll(){if(busy)return;busy=true;document.getElementById('roll').disabled=true;
+ const die=document.getElementById('die');die.classList.add('roll');for(let i=0;i<6;i++){showDie(1+Math.floor(Math.random()*6));await wait(70)}
+ die.classList.remove('roll');const v=1+Math.floor(Math.random()*6);showDie(v);const p=P[cur];
+ if(p.at+v>100){log(`${p.n} rolled ${v} but needs exactly ${100-p.at} to reach the astronaut. Stay in place.`);}
+ else{for(let i=0;i<v;i++){p.at++;tokens();ui();await wait(140)}
+  log(`${p.n} rolled ${v} and moved to square ${p.at}.`);
+  const sn=SN.find(x=>x.f===p.at),ld=LD.find(x=>x.f===p.at);
+  if(sn){await card('snake',sn);p.at=sn.t;tokens();ui();log(`${p.n} hit <b>${H[sn.k].name}</b> and slid down to ${sn.t}. Look for the ${H[sn.k].up} upgrade!`)}
+  else if(ld){await card('ladder',ld);p.at=ld.t;tokens();ui();log(`${p.n} used the <b>${H[ld.k].up}</b> upgrade and climbed to ${ld.t}!`)}
+  if(p.at===100){await card('win',{});busy=false;return}}
+ if(v!==6){cur=1-cur}else{log(document.getElementById('log').innerHTML+' Rolled a 6: roll again!')}
+ ui();busy=false;document.getElementById('roll').disabled=false}
+function card(type,x){return new Promise(res=>{const c=document.getElementById('card'),box=document.getElementById('cardbox');
+ c.classList.toggle('win',type==='win');
+ if(type==='win'){document.getElementById('cic').textContent='🏆';document.getElementById('ckind').textContent='Mission complete';document.getElementById('ckind').style.color='#facc15';
+  document.getElementById('ctitle').textContent=P[cur].n+' reached the astronaut!';document.getElementById('ctext').textContent='The Lunar Med Pod made it to the bottom of Shackleton Crater. The injured astronaut is now inside a warm, pressurized and shielded cabin, getting treatment on the way back to the base.';document.getElementById('cmove').textContent='';box.style.borderColor='#facc15'}
+ else{const h=H[x.k];box.style.borderColor=h.hex;document.getElementById('ckind').style.color=h.hex;
+  document.getElementById('cic').textContent=type==='snake'?h.ic:h.upic;
+  document.getElementById('ckind').textContent=type==='snake'?'Hazard':'Lunar Med Pod upgrade';
+  document.getElementById('ctitle').textContent=type==='snake'?h.name:h.up+' (solves '+h.name+')';
+  document.getElementById('ctext').textContent=x.txt;
+  document.getElementById('cmove').textContent=type==='snake'?`Slide down from ${x.f} to ${x.t}`:`Climb up from ${x.f} to ${x.t}`;}
+ c.classList.add('show');document.getElementById('cok').onclick=()=>{c.classList.remove('show');res()}})}
+document.getElementById('legend').innerHTML=Object.values(H).map(h=>`<div><span class="sw" style="background:${h.hex}"></span>${h.ic} ${h.name} <span class="arrow">→</span> ${h.upic} ${h.up}</div>`).join('');
+document.getElementById('roll').onclick=roll;document.getElementById('restart').onclick=()=>{if(!busy)reset()};
+reset();
+</script>
+</body>
+</html>
